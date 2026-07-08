@@ -27,7 +27,7 @@ Superposition is a console for moving and managing Workspace ONE UEM configurati
 
 ### Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- A Docker-compatible container runtime installed and running (Docker Desktop, OrbStack, Rancher Desktop, or equivalent)
 - An Intune tenant (source) and/or a Workspace ONE UEM tenant (destination)
 
 ### Pull and run the container
