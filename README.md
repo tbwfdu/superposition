@@ -1,4 +1,4 @@
-# Superposition Instructions
+# Superposition
 
 Superposition is a console for moving and managing Workspace ONE UEM configuration. It runs three jobs from one UI:
 
@@ -19,7 +19,8 @@ Superposition is a console for moving and managing Workspace ONE UEM configurati
 7. [Sync (Workspace ONE to Workspace ONE)](#sync-workspace-one-to-workspace-one)
 8. [GitHub Sync (Workspace ONE to GitHub)](#github-sync-workspace-one-to-github)
 9. [Schedules](#schedules)
-10. [Troubleshooting](#troubleshooting)
+10. [Encryption](#encryption)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -146,9 +147,18 @@ A GitHub App is a machine identity that Superposition uses to authenticate to Gi
 5. Note the **App ID** shown at the top of the App's settings page.
 6. Scroll to **Private keys > Generate a private key**. GitHub downloads a `.pem` file. Keep the entire file including the `-----BEGIN RSA PRIVATE KEY-----` header and `-----END RSA PRIVATE KEY-----` footer lines. Superposition uses this key to sign RS256 JWTs to obtain installation tokens at runtime.
 
+**Prepare a config repository**
+
+The GitHub App must be installed on a specific repository; this is the same repo Superposition pushes configuration exports to and where the bundled Actions workflow applies them. If you don't already have one:
+
+1. In GitHub, create a new repository (e.g. `superposition-config`). Public or private both work.
+2. Give it at least one commit; tick **Add a README** when creating the repo. GitOps syncs push to an existing branch, so an empty repo with zero commits will fail on the first push.
+
+Keep this repo in mind; you'll select it in both of the next two steps.
+
 **Install the App**
 
-On the App's settings page, click **Install App**, choose your organisation, select **Only select repositories**, and pick the config repo. The app must be installed before any push can succeed.
+On the App's settings page, click **Install App**, choose your organisation, select **Only select repositories**, and pick the config repo you prepared above. The app must be installed before any push can succeed.
 
 **Add to Superposition**
 
@@ -166,17 +176,7 @@ Superposition separates environment metadata from secrets at the storage layer.
 
 **Non-secret metadata** (Tenant IDs, Client IDs, Server URLs, Group IDs, App IDs) is stored in `environments.db` in the output volume. This data is not sensitive on its own; it identifies the environment but cannot authenticate to it.
 
-**Secrets** (Client Secrets, Private Keys) are stored in a separate encrypted vault file at `output/secrets.enc.json` inside the output volume. The vault file is keyed by environment ID, so metadata and secrets are never combined into a single record.
-
-### Encryption
-
-Secrets are encrypted with **AES-256-GCM** before being written to disk. Each secret bag is encrypted independently with a fresh random 96-bit IV (nonce), producing three hex-encoded fields stored in the vault:
-
-- `iv`: the 12-byte initialisation vector used for this entry
-- `tag`: the 16-byte GCM authentication tag (detects tampering)
-- `ct`: the ciphertext
-
-The GCM authentication tag means any modification to the ciphertext is detected and rejected at decrypt time. The IV is unique per write, so two identical secrets produce different ciphertext.
+**Secrets** (Client Secrets, Private Keys) are stored in a separate encrypted vault file at `output/secrets.enc.json` inside the output volume. The vault file is keyed by environment ID, so metadata and secrets are never combined into a single record. See [Encryption](#encryption) for how these secrets are protected at rest.
 
 ### Master key
 
@@ -489,7 +489,7 @@ Export-only and PR-gated modes compose independently: Export only controls wheth
 
 **Additional toggles**
 
-- **Mirror organization group structure**: replicates the source OG hierarchy into the repo under `slingshot/export/og_tree.json` and bakes `mirrorOgStructure: true` into the manifest, so the apply workflow forwards `--mirror-ogs` to the importer on the target UEM.
+- **Mirror organization group structure**: replicates the source OG hierarchy into the repo under `superposition/export/og_tree.json` and bakes `mirrorOgStructure: true` into the manifest, so the apply workflow forwards `--mirror-ogs` to the importer on the target UEM.
 - **Git LFS**: routes binary application files (`.msi`, `.exe`, `.pkg`, `.dmg`, `.msix`) through GitHub LFS. Without this, non-JSON files are skipped. Enable it only if you need application binaries in the repo; LFS storage and bandwidth are metered on most GitHub plans.
 
 ### Step 2: Export
@@ -506,11 +506,11 @@ Click **Push and open PR** (or **Push to GitHub** for direct push). A confirmati
 
 <img src="docs/screenshots/092-sync-github-push-confirm.png" width="700">
 
-The push log shows each step: authenticating with the GitHub App (minting a short-lived installation token from the RS256-signed App JWT), resolving the target branch HEAD, uploading any LFS objects, committing the export files and bundled pipeline under `slingshot/`, and opening the pull request.
+The push log shows each step: authenticating with the GitHub App (minting a short-lived installation token from the RS256-signed App JWT), resolving the target branch HEAD, uploading any LFS objects, committing the export files and bundled pipeline under `superposition/`, and opening the pull request.
 
 <img src="docs/screenshots/093-sync-github-push-progress.png" width="700">
 
-On the first push, Superposition also scaffolds `.github/workflows/superposition-apply.yml` and `slingshot/manifest.json`. The manifest records the categories, conflict policy, OG mirroring flag, and the apply command so the workflow needs no manual configuration. Unchanged files reuse their existing blob SHAs, so subsequent pushes commit only the files that actually changed.
+On the first push, Superposition also scaffolds `.github/workflows/superposition-apply.yml` and `superposition/manifest.json`. The manifest records the categories, conflict policy, OG mirroring flag, and the apply command so the workflow needs no manual configuration. Unchanged files reuse their existing blob SHAs, so subsequent pushes commit only the files that actually changed.
 
 ### Step 4: Review and merge the pull request
 
@@ -520,7 +520,7 @@ Open the pull request on GitHub. Superposition populates the PR description with
 
 ### Step 5: The Actions workflow applies to the target UEM
 
-Merging the PR triggers the bundled `superposition-apply.yml` workflow. It installs the pipeline dependencies from `slingshot/pipeline/requirements.txt`, reads `slingshot/manifest.json`, stages the export for the importer, and applies the configuration to the target UEM using the `WS1_*` Actions secrets.
+Merging the PR triggers the bundled `superposition-apply.yml` workflow. It installs the pipeline dependencies from `superposition/pipeline/requirements.txt`, reads `superposition/manifest.json`, stages the export for the importer, and applies the configuration to the target UEM using the `WS1_*` Actions secrets.
 
 <img src="docs/screenshots/095-sync-github-runner.png" width="700">
 
@@ -551,6 +551,18 @@ Set the time and time zone (IANA timezone names, e.g. `America/Los_Angeles`). Th
 Schedules are stored in the database and rehydrate on server boot. Scheduled runs that were missed while the server was down are not caught up automatically. Each scheduled run is tagged `trigger: schedule` in the run history, distinct from runs started manually. To run a sync immediately without waiting for the next scheduled time, use the **Run now** button on the sync's detail page.
 
 Schedules only fire while the Superposition server process is running. If the container is stopped, no runs execute. Plan your container restart windows accordingly if you rely on scheduled syncs for production automation.
+
+---
+
+## Encryption
+
+Secrets are encrypted with **AES-256-GCM** before being written to disk. Each secret bag is encrypted independently with a fresh random 96-bit IV (nonce), producing three hex-encoded fields stored in the vault:
+
+- `iv`: the 12-byte initialisation vector used for this entry
+- `tag`: the 16-byte GCM authentication tag (detects tampering)
+- `ct`: the ciphertext
+
+The GCM authentication tag means any modification to the ciphertext is detected and rejected at decrypt time. The IV is unique per write, so two identical secrets produce different ciphertext.
 
 ---
 
