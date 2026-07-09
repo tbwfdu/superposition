@@ -24,7 +24,11 @@ Superposition is a solution for migrating, syncing and managing MDM configuratio
 </br>
 </br>
 
-https://github.com/tbwfdu/superposition/raw/refs/heads/main/docs/demo.mp4
+
+
+https://github.com/user-attachments/assets/e87100d5-2395-4290-a3b3-5ed2b6bb0458
+
+
 
 ### Supported Configuration Types
 Below is the list of configuration types that can be **migrated, synced or exported/imported** for their respective environment types:
