@@ -7,24 +7,22 @@ Superposition is a solution for migrating, syncing and managing MDM configuratio
 
 </p>
 
-<table style="margin: 0 auto; width: 70%;">
+<table>
   <tr>
-    <td style="font-weight: bold">Migration</td>
-    <td>Intune to Workspace ONE UEM (one-time import)</td>
+    <td style="font-weight: bold; width: 20%;"><b>Migration</b></td>
+    <td style="font-weight: bold; width: 0%;">Intune to Workspace ONE UEM (one-time import)</td>
   </tr>
   <tr>
-    <td style="font-weight: bold">Sync</td>
-    <td >Workspace ONE to Workspace ONE (keep two Workspace ONE tenants aligned)</td>
+    <td style="font-weight: bold"><b>Sync</b></td>
+    <td>Workspace ONE to Workspace ONE (keep two Workspace ONE tenants aligned)</td>
   </tr>
   <tr>
-    <td style="font-weight: bold">GitOps</td>
-    <td style="width: 100%;">Workspace ONE to GitHub (configuration as code, with an Actions-driven apply)</td>
+    <td style="font-weight: bold"><b>GitOps</b></td>
+    <td>Workspace ONE to GitHub (configuration as code, with an Actions-driven apply)</td>
   </tr>
 </table>
 </br>
 </br>
-
-
 
 https://github.com/user-attachments/assets/e87100d5-2395-4290-a3b3-5ed2b6bb0458
 
