@@ -1,10 +1,52 @@
 # Superposition
 
-Superposition is a console for moving and managing Workspace ONE UEM configuration. It runs three jobs from one UI:
+Superposition is a solution for migrating, syncing and managing MDM configuration. It has three main capabilities available a single console:
 
-- **Migration**: Intune to Workspace ONE UEM (one-time import)
-- **Sync**: Workspace ONE to Workspace ONE (keep two tenants aligned)
-- **GitOps**: Workspace ONE to GitHub (configuration as code, with an Actions-driven apply)
+<p align="center"; text-align="center">
+	<img src="docs/diagram.svg" width="500">
+
+</p>
+
+<table style="margin: 0 auto; width: 70%;">
+  <tr>
+    <td style="font-weight: bold">Migration</td>
+    <td>Intune to Workspace ONE UEM (one-time import)</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold">Sync</td>
+    <td >Workspace ONE to Workspace ONE (keep two Workspace ONE tenants aligned)</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold">GitOps</td>
+    <td style="width: 100%;">Workspace ONE to GitHub (configuration as code, with an Actions-driven apply)</td>
+  </tr>
+</table>
+</br>
+</br>
+
+### Supported Configuration Types
+Below is the list of configuration types that can be **migrated, synced or exported/imported** for their respective environment types:
+
+<table style="margin: 0 auto; width: 70%;">
+  <th>Environment</th>
+  <th>Configuration Type</th>
+  <th>Supported Flows</th>
+  <tr>
+    <td style="font-weight: bold; vertical-align: top; width: 20%;">Intune</td>
+    <td>Device configuration profiles, Settings Catalog policies, Group Policy (ADMX) templates, compliance policies, device management scripts, proactive remediations, application inventory, certificates, network profiles, update management artifacts, enrollment and provisioning inventory, RBAC inventory</td>
+    <td style="font-weight: bold; text-align: center; width: 20%;">Export</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold">Workspace ONE</td>
+    <td>Profiles, scripts, sensors, applications, smart groups (no assignments/criteria), organisation group structure </td>
+    <td style="font-weight: bold; text-align: center; width: 20%;">Export + Sync</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold">GitHub</td>
+    <td>Profiles, scripts, sensors, applications, smart groups (no assignments/criteria), organisation group structure </br>(committed as versioned JSON, same categories as Sync)</td>
+  <td style="font-weight: bold; text-align: center; width: 20%;">Sync + GitOps (CI/CD) </td>
+  </tr>
+</table>
 
 ---
 
@@ -287,6 +329,78 @@ The built-in Skip, Overwrite, and Source wins policies cover the common cases. C
 ## Migration (Intune to Workspace ONE)
 
 A migration moves configuration from an Intune tenant into a Workspace ONE UEM Organization Group. It runs once per migration object; re-running is safe because the validation step surfaces conflicts before any write occurs.
+
+### What gets migrated automatically
+
+Every category below is exported from Intune, but not all of them have a Workspace ONE equivalent that Superposition can write to automatically.
+
+<table>
+  <tr>
+    <th width="28%">Intune category</th>
+    <th width="18%">Automatic translate + import</th>
+    <th>Notes</th>
+  </tr>
+  <tr>
+    <td>Device configuration profiles</td>
+    <td>Yes</td>
+    <td>Windows payload types (Custom OMA-URI, BitLocker, Defender, Windows Update, Firewall) are consolidated into <code>CustomSettingsPayload</code>; any setting whose best match is a WS1 V1-only native payload (e.g. the console Encryption payload) is flagged as a "native candidate" in the migration report for manual rebuild instead</td>
+  </tr>
+  <tr>
+    <td>Settings Catalog policies</td>
+    <td>Yes</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Group Policy (ADMX) templates</td>
+    <td>Yes</td>
+    <td>Consolidated into <code>CustomSettingsPayload</code></td>
+  </tr>
+  <tr>
+    <td>Compliance policies</td>
+    <td>Yes</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Device management scripts</td>
+    <td>Yes</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Proactive remediations</td>
+    <td>Yes</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Application inventory</td>
+    <td>Yes</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Certificates</td>
+    <td>Yes</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Network profiles</td>
+    <td>Yes</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Update management artifacts</td>
+    <td>No, manual</td>
+    <td>Exported and included in the migration report; there is no Workspace ONE import target</td>
+  </tr>
+  <tr>
+    <td>Enrollment and provisioning inventory</td>
+    <td>No, manual</td>
+    <td>Exported and included in the migration report; there is no Workspace ONE import target</td>
+  </tr>
+  <tr>
+    <td>RBAC inventory</td>
+    <td>No, manual</td>
+    <td>Exported and included in the migration report; there is no Workspace ONE import target</td>
+  </tr>
+</table>
 
 ### Step 1: Compose
 
