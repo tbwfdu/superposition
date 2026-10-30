@@ -1,5 +1,7 @@
 # Superposition
 
+> **Latest release: [2026.10.30](https://github.com/tbwfdu/superposition/releases/tag/v2026.10.30)** ([release notes](https://github.com/tbwfdu/superposition/releases/tag/v2026.10.30))
+
 Superposition is a solution for migrating, syncing and managing MDM configuration. It has three main capabilities available a single console:
 
 <p align="center"; text-align="center">
